@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f8f5ef" />
+  <title>Mijoté — Mes recettes</title>
+  <style>
+    :root { --ink:#29302a; --muted:#70756e; --paper:#f8f5ef; --card:#fffdfa; --line:#e4e0d8; --sage:#647461; --sage-dark:#41513f; --pink:#cf5e75; --danger:#a94646; --shadow:0 8px 28px rgba(59,53,43,.07); }
+    * { box-sizing:border-box; min-width: 0; }
+    html { background:var(--paper); }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:ui-rounded,"Avenir Next",Avenir,"Segoe UI",sans-serif; line-height:1.45; }
+    .app-shell { max-width:1120px; margin:auto; padding:0 20px 100px; }
+    .topbar { height:76px; display:flex; align-items:center; justify-content:space-between; }
+    .brand { font-size:1.35rem; font-weight:750; letter-spacing:-.04em; color:var(--ink); text-decoration:none; }
+    .brand span { color:var(--pink); }
+    .text-button, .secondary-button, .primary-button, .danger-button, .icon-button { font:inherit; cursor:pointer; border:0; transition:transform .16s,background .16s,color .16s; }
+    .text-button { color:var(--sage-dark); background:none; font-size:.88rem; padding: 10px; margin: -10px; }
+    .hero { padding:42px 0 38px; }
+    .eyebrow { font-size:.7rem; font-weight:800; letter-spacing:.13em; color:var(--sage); margin:0 0 8px; }
+    .hero h1, .view-heading h1, .detail h1 { font-size:clamp(2.3rem,5vw,4.3rem); line-height:1.02; letter-spacing:-.06em; margin:0; max-width:620px; overflow-wrap: anywhere; }
+    .subtle { color:var(--muted); max-width:460px; margin:20px 0 0; }
+    .toolbar { display:flex; gap:12px; margin-bottom:28px; }
+    .search-field { height:50px; flex:1; display:flex; align-items:center; gap:9px; padding:0 16px; border:1px solid var(--line); background:var(--card); border-radius:14px; color:var(--muted); }
+    input, select, textarea { font:inherit; color:var(--ink); }
+    .search-field input { flex:1; border:0; outline:0; background:transparent; width: 100%; }
+    .sort-field { display:flex; align-items:center; gap:6px; padding:0 12px; border:1px solid var(--line); border-radius:14px; background:var(--card); font-size:.82rem; color:var(--muted); }
+    .sort-field select { max-width:155px; border:0; background:transparent; outline:0; color:var(--ink); }
+    .recipe-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:20px; }
+    .recipe-card { border-radius:18px; background:var(--card); box-shadow:var(--shadow); cursor:pointer; outline-offset:4px; animation:appear .3s ease both; display: flex; flex-direction: column; }
+    .recipe-card:hover { transform:translateY(-2px); }
+    .card-image { height:172px; position:relative; display:grid; place-items:center; background:#e6e8df; color:#83907a; font-size:2.2rem; border-radius: 18px 18px 0 0; overflow: hidden; }
+    .card-image img { width:100%; height:100%; object-fit:cover; }
+    .favorite { display:grid; place-items:center; width:36px; height:36px; border:0; border-radius:50%; background:rgba(255,253,250,.92); color:#8c918c; font-size:1.25rem; cursor:pointer; transition:transform .16s,color .16s; }
+    .card-image .favorite { position:absolute; top:12px; right:12px; }
+    .favorite.active { color:var(--pink); animation:heart .3s ease; }
+    .favorite:hover, .favorite:focus-visible { transform:scale(1.1); outline: 2px solid var(--pink); outline-offset: 2px; }
+    .card-body { padding:17px 18px 19px; flex:1; }
+    .card-body h2 { font-size:1.05rem; letter-spacing:-.025em; margin:0 0 7px; overflow-wrap: anywhere; }
+    .card-body p, .detail-meta { font-size:.82rem; color:var(--muted); margin:0; }
+    .card-body i, .detail-meta i { font-style:normal; color:#b7bbb4; padding:0 4px; }
+    .empty-state { grid-column:1/-1; padding:68px 20px; text-align:center; border:1px dashed #d7d3ca; border-radius:18px; color:var(--muted); }
+    .empty-state span { display:grid; place-items:center; width:48px; height:48px; margin:0 auto 16px; border-radius:50%; background:#e6e8df; color:var(--sage); font-size:1.3rem; }
+    .empty-state h2 { color:var(--ink); margin:0; font-size:1.25rem; }
+    .empty-state p { max-width:330px; margin:8px auto 22px; font-size:.93rem; }
+    .primary-button, .secondary-button, .danger-button { min-height:44px; padding:0 16px; border-radius:11px; font-weight:700; font-size:.9rem; }
+    .primary-button { background:var(--sage-dark); color:#fff; }
+    .primary-button:hover:not(:disabled) { background:#30412f; }
+    .primary-button:disabled { opacity: 0.7; cursor: not-allowed; }
+    .secondary-button { background:#eceae4; color:var(--ink); }
+    .secondary-button:hover { background:#e0ded6; }
+    .danger-button { background:#f7e9e7; color:var(--danger); }
+    .danger-button:hover { background:#efd9d6; }
+    .fab { position:fixed; right:max(22px,calc((100vw - 1120px)/2)); bottom:28px; width:58px; height:58px; border:0; border-radius:50%; background:var(--sage-dark); color:white; font-size:2rem; line-height:1; box-shadow:0 10px 22px rgba(47,65,46,.24); cursor:pointer; transition:transform .16s,background .16s; }
+    .fab:hover { transform:scale(1.07) rotate(8deg); }
+    [hidden] { display:none!important; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
+    
+    .editor, .detail { max-width:800px; margin:auto; animation:appear .2s ease; }
+    .view-heading { padding:26px 0 30px; }
+    .form-layout { display:grid; grid-template-columns:220px 1fr; gap:26px; align-items:start; }
+    .photo-uploader { height:220px; position:relative; overflow:hidden; border:1px dashed #bec4b9; border-radius:16px; background:#eeefe9; }
+    .photo-uploader:focus-within { border-color:var(--sage-dark); outline: 2px solid var(--sage); outline-offset: 2px; }
+    .photo-uploader label { height:100%; display:flex; cursor:pointer; flex-direction:column; align-items:center; justify-content:center; gap:5px; color:var(--sage-dark); text-align:center; padding:10px; }
+    .photo-uploader small { color:var(--muted); font-size:.7rem; }
+    .camera { font-size:1.7rem; }
+    .photo-uploader img { height:100%; width:100%; object-fit:cover; }
+    .remove-photo { position:absolute; top:9px; right:9px; border:0; width:30px; height:30px; border-radius:50%; background:#fff; color:var(--ink); font-size:1.3rem; cursor:pointer; }
+    .general-fields { display:grid; gap:16px; }
+    .general-fields label, .entry-section label { font-size:.83rem; font-weight:700; display:grid; gap:7px; }
+    .general-fields input, .general-fields select, .ingredient-row input, .step-row textarea { width:100%; border:1px solid var(--line); border-radius:10px; background:var(--card); padding:12px; outline:none; }
+    .general-fields input:focus, .general-fields select:focus, .ingredient-row input:focus, .step-row textarea:focus, .search-field:focus-within { border-color:var(--sage); box-shadow:0 0 0 3px rgba(100,116,97,.12); }
+    .two-columns { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .entry-section { margin-top:42px; }
+    .section-heading { display:flex; align-items:end; justify-content:space-between; margin-bottom:15px; }
+    .section-heading h2, .detail h2 { margin:0; font-size:1.3rem; letter-spacing:-.04em; }
+    .dynamic-list, .steps-list { display:grid; gap:10px; }
+    .ingredient-row { display:flex; gap:8px; }
+    .icon-button { width:43px; border-radius:10px; background:#f0eee8; color:var(--muted); font-size:1.3rem; flex-shrink: 0; }
+    .step-row { display:grid; grid-template-columns:32px 1fr 43px; gap:8px; align-items:start; }
+    .step-number { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:#e6e8df; color:var(--sage-dark); font-size:.78rem; font-weight:800; margin-top:8px; }
+    .step-row textarea { resize:vertical; min-height:72px; }
+    .form-actions, .detail-actions { display:flex; justify-content:flex-end; gap:10px; margin:38px 0; }
+    .notice { padding:12px 14px; border-radius:10px; margin-bottom:20px; font-size:.88rem; }
+    .error { background:#f8e9e7; color:#943f3f; border: 1px solid #e1b4b4; }
+    
+    .detail-hero { height:min(52vw,380px); border-radius:20px; background:#e6e8df; display:grid; place-items:center; font-size:3rem; overflow:hidden; }
+    .detail-hero img { width:100%; height:100%; object-fit:cover; }
+    .detail-content { padding:32px 4px; }
+    .detail-title { display:flex; justify-content:space-between; gap:20px; align-items:start; margin-bottom:44px; }
+    .detail h1 { font-size:clamp(2.1rem,4vw,3.4rem); margin-bottom:12px; }
+    .favorite.large { width:47px; height:47px; font-size:1.65rem; flex:none; }
+    .detail section { margin:34px 0; }
+    .detail section .eyebrow { margin-bottom:6px; }
+    .ingredients-detail { padding:0; list-style:none; display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; margin:17px 0; }
+    .ingredients-detail li { padding:12px; border-radius:10px; background:#eeefe9; font-size:.92rem; overflow-wrap: anywhere; }
+    .steps-detail { padding:0; list-style:none; counter-reset:steps; display:grid; gap:17px; margin:19px 0; }
+    .steps-detail li { counter-increment:steps; display:grid; grid-template-columns:30px 1fr; gap:12px; align-items:start; overflow-wrap: anywhere; }
+    .steps-detail li::before { content:counter(steps); display:grid; place-items:center; width:28px; height:28px; border-radius:50%; background:var(--sage-dark); color:#fff; font-size:.75rem; font-weight:800; }
+    
+    .toast { position:fixed; z-index:5; left:50%; bottom:25px; transform:translate(-50%,90px); max-width:calc(100% - 40px); padding:12px 16px; border-radius:12px; background:#29302a; color:white; font-size:.86rem; box-shadow:var(--shadow); opacity:0; transition:.25s; }
+    .toast.show { transform:translate(-50%,0); opacity:1; }
+    @keyframes heart { 50%{transform:scale(1.28)} }
+    @keyframes appear { from{opacity:0; transform:translateY(6px)} }
+    
+    @media(max-width:600px) {
+      .app-shell { padding:0 16px 92px; }
+      .topbar { height:65px; }
+      .hero { padding:27px 0 28px; }
+      .toolbar { display:grid; grid-template-columns:1fr; }
+      .sort-field { height:43px; justify-content:space-between; }
+      .sort-field select { max-width:none; }
+      .recipe-grid { grid-template-columns:1fr 1fr; gap:12px; }
+      .card-image { height:128px; border-radius: 14px 14px 0 0; }
+      .card-body { padding:13px; }
+      .card-body h2 { font-size:.92rem; }
+      .card-body p { font-size:.7rem; }
+      .card-body i { padding:0 1px; }
+      .fab { right:20px; bottom:20px; }
+      .form-layout { grid-template-columns:1fr; }
+      .photo-uploader { height:180px; }
+      .entry-section { margin-top:34px; }
+      .view-heading { padding:20px 0 24px; }
+      .detail-content { padding:25px 0; }
+      .detail-hero { margin:0 -16px; border-radius:0; height:58vw; }
+      .detail-title { margin-bottom:34px; }
+      .form-actions { position:sticky; bottom:0; background:var(--paper); padding:12px 0; margin:28px 0 0; }
+      .form-actions .primary-button { flex:1; }
+    }
+    @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; scroll-behavior:auto!important; } }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#list" aria-label="Retour aux recettes">Mijoté<span>•</span></a>
+      <button class="text-button" id="back-button" type="button" hidden>← Toutes les recettes</button>
+    </header>
+
+    <section id="list-view" class="view">
+      <div class="hero">
+        <p class="eyebrow">MON CARNET</p>
+        <h1>Vos recettes,<br />à votre goût.</h1>
+        <p class="subtle">Gardez vos idées, ingrédients et étapes toujours sous la main.</p>
+      </div>
+      <div class="toolbar" aria-label="Recherche et tri">
+        <label class="search-field">
+          <span aria-hidden="true">⌕</span>
+          <input id="search-input" type="search" placeholder="Rechercher (ex: Gâteau, œuf...)" />
+        </label>
+        <label class="sort-field">Trier 
+          <select id="sort-select" aria-label="Trier les recettes">
+            <option value="newest">Plus récentes</option>
+            <option value="oldest">Plus anciennes</option>
+            <option value="az">A → Z</option>
+            <option value="za">Z → A</option>
+            <option value="shortest">Temps le plus court</option>
+            <option value="longest">Temps le plus long</option>
+            <option value="difficulty">Facile → difficile</option>
+          </select>
+        </label>
+      </div>
+      <div id="recipe-grid" class="recipe-grid" aria-live="polite"></div>
+    </section>
+
+    <section id="editor-view" class="view editor" hidden>
+      <div class="view-heading"><p class="eyebrow" id="editor-kicker">NOUVELLE RECETTE</p><h1 id="editor-title">Ajouter une recette</h1></div>
+      <form id="recipe-form" novalidate>
+        <div id="form-error" class="notice error" role="alert" hidden></div>
+        <div class="form-layout">
+          <div class="photo-uploader">
+            <input id="photo-input" class="sr-only" type="file" accept="image/jpeg, image/png, image/webp" />
+            <label for="photo-input" id="photo-label">
+              <span class="camera">＋</span><strong>Ajouter une photo</strong><small>JPG, PNG, WebP · Convertie en JPEG</small>
+            </label>
+            <img id="photo-preview" alt="Aperçu" hidden />
+            <button id="remove-photo" class="remove-photo" type="button" hidden aria-label="Supprimer la photo">×</button>
+          </div>
+          <div class="general-fields">
+            <label>Nom de la recette <input name="title" autocomplete="off" required maxlength="100" placeholder="Ex. Gnocchis sauce tomate" /></label>
+            <div class="two-columns">
+              <label>Temps (min) <input name="minutes" type="number" inputmode="numeric" min="1" max="9999" required placeholder="30" /></label>
+              <label>Personnes <input name="servings" type="number" inputmode="numeric" min="1" max="99" required placeholder="2" /></label>
+            </div>
+            <label>Difficulté 
+              <select name="difficulty" required>
+                <option value="Facile">Facile</option>
+                <option value="Moyenne">Moyenne</option>
+                <option value="Difficile">Difficile</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <section class="entry-section">
+          <div class="section-heading"><div><p class="eyebrow">À PRÉVOIR</p><h2>Ingrédients</h2></div><button class="secondary-button" id="add-ingredient" type="button">+ Ajouter</button></div>
+          <div id="ingredients-list" class="dynamic-list"></div>
+        </section>
+        <section class="entry-section">
+          <div class="section-heading"><div><p class="eyebrow">PAS À PAS</p><h2>Préparation</h2></div><button class="secondary-button" id="add-step" type="button">+ Ajouter</button></div>
+          <div id="steps-list" class="steps-list"></div>
+        </section>
+        <div class="form-actions">
+          <button id="cancel-editor" class="secondary-button" type="button">Annuler</button>
+          <button id="save-button" class="primary-button" type="submit">Enregistrer la recette</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="detail-view" class="view detail" hidden></section>
+  </main>
+  
+  <button id="add-button" class="fab" type="button" aria-label="Ajouter une recette">+</button>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // --- DB: IndexedDB Setup ---
+    const DB_NAME = 'mijote-recipes', STORE = 'recipes';
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = () => { req.result.createObjectStore(STORE, { keyPath: 'id' }).createIndex('createdAt', 'createdAt'); };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+    async function run(mode, action) {
+      const db = await openDatabase();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, mode);
+        const request = action(tx.objectStore(STORE));
+        tx.oncomplete = () => { db.close(); resolve(request.result); };
+        tx.onabort = () => reject(tx.error || new Error("Transaction avortée"));
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+    const recipeDb = {
+      getAll: () => run('readonly', s => s.getAll()),
+      get: id => run('readonly', s => s.get(id)),
+      save: recipe => run('readwrite', s => s.put(recipe)),
+      remove: id => run('readwrite', s => s.delete(id))
+    };
+
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+
+    // BroadcastChannel pour synchroniser plusieurs onglets
+    const syncChannel = 'BroadcastChannel' in window ? new BroadcastChannel('mijote_sync') : null;
+    if (syncChannel) syncChannel.onmessage = () => refreshRecipes(); // render true !
+
+    // --- UTILS & ÉTATS ---
+    const $ = s => document.querySelector(s);
+    const views = { list: $('#list-view'), editor: $('#editor-view'), detail: $('#detail-view') };
+    const difficultyRank = { Facile: 1, Moyenne: 2, Difficile: 3 };
+    
+    const state = { 
+      recipes: [], editingId: null, photo: null, query: '', isSaving: false,
+      sort: localStorage.getItem('mijote_sort') || 'newest' 
+    };
+    $('#sort-select').value = state.sort;
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+    function normalizeStr(str) {
+      return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/œ/g, 'oe').replace(/æ/g, 'ae').toLowerCase();
+    }
+    function showToast(msg) { 
+      const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+      clearTimeout(t.timer); t.timer = setTimeout(() => t.classList.remove('show'), 2800); 
+    }
+    
+    function showView(name, pushHistory = true) { 
+      Object.entries(views).forEach(([k, v]) => v.hidden = (k !== name)); 
+      $('#add-button').hidden = (name !== 'list'); 
+      $('#back-button').hidden = (name === 'list'); 
+      window.scrollTo({ top: 0 });
+      if (pushHistory && window.location.hash !== `#${name}`) history.pushState({ view: name }, '', `#${name}`);
+    }
+    window.addEventListener('popstate', e => {
+      const view = e.state?.view || 'list';
+      if (view === 'list') refreshRecipes(); // render true !
+      showView(view, false);
+    });
+
+    // --- LISTE ---
+    function formatMeta(r) { return `${r.minutes} min <i>•</i> ${escapeHtml(r.difficulty)} <i>•</i> ${r.servings} pers.`; }
+
+    function renderList() {
+      const grid = $('#recipe-grid'); 
+      const query = normalizeStr(state.query.trim());
+      
+      const filtered = state.recipes.filter(r => 
+        !query || normalizeStr(r.title).includes(query) || 
+        r.ingredients.some(i => normalizeStr(i).includes(query)) ||
+        r.steps.some(s => normalizeStr(s).includes(query))
+      );
+      
+      filtered.sort((a, b) => {
+        let diff = 0;
+        switch(state.sort) {
+          case 'newest': diff = b.createdAt - a.createdAt; break;
+          case 'oldest': diff = a.createdAt - b.createdAt; break;
+          case 'az': diff = a.title.localeCompare(b.title, 'fr'); break;
+          case 'za': diff = b.title.localeCompare(a.title, 'fr'); break;
+          case 'shortest': diff = a.minutes - b.minutes; break;
+          case 'longest': diff = b.minutes - a.minutes; break;
+          case 'difficulty': diff = difficultyRank[a.difficulty] - difficultyRank[b.difficulty]; break;
+        }
+        return diff === 0 ? (b.createdAt - a.createdAt) : diff; // Tri secondaire
+      });
+
+      if (!filtered.length) { 
+        const isSearch = state.query.trim().length > 0;
+        grid.innerHTML = `<div class="empty-state"><span>${isSearch ? '⌕' : '✦'}</span><h2>${isSearch ? 'Aucun résultat' : 'Votre carnet est vide'}</h2><p>${isSearch ? 'Essayez un autre mot-clé.' : 'Ajoutez votre première recette.'}</p>${isSearch ? '' : '<button class="primary-button" id="empty-create" type="button">Créer une recette</button>'}</div>`; 
+        $('#empty-create')?.addEventListener('click', () => showView('editor')); 
+        return; 
+      }
+      
+      grid.innerHTML = filtered.map(r => 
+        `<article class="recipe-card" tabindex="0" data-id="${r.id}" aria-label="Ouvrir ${escapeHtml(r.title)}">
+          <div class="card-image">
+            ${r.photo ? `<img src="${r.photo}" loading="lazy" alt="" />` : '<span>🍽</span>'}
+            <button class="favorite ${r.favorite ? 'active' : ''}" type="button" data-favorite="${r.id}" aria-label="${r.favorite ? 'Retirer' : 'Ajouter'} favori" title="Favori">♥</button>
+          </div>
+          <div class="card-body">
+            <h2>${escapeHtml(r.title)}</h2>
+            <p>${formatMeta(r)}</p>
+          </div>
+        </article>`
+      ).join('');
+      
+      grid.querySelectorAll('.recipe-card').forEach(card => {
+        card.addEventListener('click', e => { if (!e.target.closest('.favorite')) openDetail(card.dataset.id); });
+        card.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target === card) openDetail(card.dataset.id); });
+      });
+      grid.querySelectorAll('.favorite').forEach(btn => {
+        btn.addEventListener('click', e => { e.stopPropagation(); toggleFavorite(btn.dataset.favorite); });
+        btn.addEventListener('keydown', e => { if(e.key==='Enter') { e.stopPropagation(); toggleFavorite(btn.dataset.favorite); } });
+      });
+    }
+
+    // Le paramètre "render" doit être "true" par défaut pour bien mettre à jour l'affichage au démarrage
+    async function refreshRecipes(render = true) { 
+      try { state.recipes = await recipeDb.getAll(); if (render) renderList(); } 
+      catch { showToast('Erreur de lecture de la base.'); } 
+    }
+
+    async function toggleFavorite(id) { 
+      try {
+        const recipe = await recipeDb.get(id);
+        if (!recipe) return showToast('Recette introuvable (supprimée ailleurs ?)');
+        recipe.favorite = !recipe.favorite;
+        await recipeDb.save(recipe);
+        const idx = state.recipes.findIndex(r => r.id === id);
+        if (idx !== -1) state.recipes[idx].favorite = recipe.favorite;
+        
+        const btn = document.querySelector(`.favorite[data-favorite="${id}"]`);
+        if (btn) { btn.classList.toggle('active', recipe.favorite); btn.ariaLabel = recipe.favorite ? 'Retirer' : 'Ajouter'; }
+        const btnDetail = document.getElementById('detail-favorite');
+        if (btnDetail && views.detail.dataset.id === id) btnDetail.classList.toggle('active', recipe.favorite);
+        
+        if(syncChannel) syncChannel.postMessage('sync');
+        showToast(recipe.favorite ? 'Ajoutée aux favoris' : 'Retirée des favoris');
+      } catch { showToast('Erreur de sauvegarde.'); }
+    }
+
+    // --- EDITEUR ---
+    function addIngredient(value = '') { 
+      const row = document.createElement('div'); row.className = 'ingredient-row';
+      const input = document.createElement('input'); 
+      input.className = 'ingredient-input'; input.type = 'text'; input.placeholder = "Ex. 200 g de farine"; input.ariaLabel = "Ingrédient"; input.value = value;
+      const btn = document.createElement('button'); btn.className = 'icon-button'; btn.type = 'button'; btn.ariaLabel = "Supprimer"; btn.textContent = '×';
+      btn.onclick = () => row.remove();
+      row.append(input, btn);
+      $('#ingredients-list').append(row); 
+      return input;
+    }
+    
+    function addStep(value = '') { 
+      const row = document.createElement('div'); row.className = 'step-row';
+      const span = document.createElement('span'); span.className = 'step-number';
+      const ta = document.createElement('textarea'); ta.className = 'step-input'; ta.rows = 2; ta.placeholder = "Décrivez cette étape"; ta.ariaLabel = "Étape"; ta.value = value;
+      const btn = document.createElement('button'); btn.className = 'icon-button'; btn.type = 'button'; btn.ariaLabel = "Supprimer"; btn.textContent = '×';
+      btn.onclick = () => { row.remove(); numberSteps(); };
+      row.append(span, ta, btn);
+      $('#steps-list').append(row); 
+      numberSteps(); 
+    }
+    function numberSteps() { $('#steps-list').querySelectorAll('.step-number').forEach((el, i) => el.textContent = i + 1); }
+    
+    function resetEditor() { 
+      state.editingId = null; state.photo = null; state.isSaving = false;
+      $('#recipe-form').reset(); $('#ingredients-list').innerHTML = ''; $('#steps-list').innerHTML = ''; 
+      addIngredient(); addStep(); 
+      $('#photo-preview').hidden = true; $('#photo-preview').removeAttribute('src'); 
+      $('#photo-label').hidden = false; $('#remove-photo').hidden = true; $('#form-error').hidden = true; 
+      $('#editor-kicker').textContent = 'NOUVELLE RECETTE'; $('#editor-title').textContent = 'Ajouter une recette'; 
+      $('#save-button').disabled = false; $('#save-button').textContent = 'Enregistrer la recette';
+    }
+
+    $('#recipe-form').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault(); 
+        if (e.target.classList.contains('ingredient-input')) addIngredient().focus();
+      }
+    });
+
+    async function handlePhoto(event) { 
+      const file = event.target.files[0]; 
+      if (!file) return; 
+      if (!file.type.startsWith('image/')) return showToast('Fichier image invalide.');
+      
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          if (w > 1200) { h = Math.round(h * (1200 / w)); w = 1200; }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          state.photo = canvas.toDataURL('image/jpeg', 0.8);
+          const preview = $('#photo-preview');
+          preview.src = state.photo; preview.hidden = false;
+          $('#photo-label').hidden = true; $('#remove-photo').hidden = false;
+        };
+        img.onerror = () => showToast('Image illisible.');
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function openEdit(id) { 
+      const recipe = await recipeDb.get(id);
+      if (!recipe) return showToast('Recette introuvable (supprimée ailleurs ?)'); 
+      resetEditor(); 
+      state.editingId = id; state.photo = recipe.photo || null; 
+      $('#editor-kicker').textContent = 'MODIFIER'; $('#editor-title').textContent = recipe.title; 
+      const f = $('#recipe-form'); 
+      f.title.value = recipe.title; f.minutes.value = recipe.minutes; f.servings.value = recipe.servings; f.difficulty.value = recipe.difficulty; 
+      $('#ingredients-list').innerHTML = ''; $('#steps-list').innerHTML = ''; 
+      recipe.ingredients.forEach(addIngredient); recipe.steps.forEach(addStep); 
+      if (state.photo) { $('#photo-preview').src = state.photo; $('#photo-preview').hidden = false; $('#photo-label').hidden = true; $('#remove-photo').hidden = false; }
+      showView('editor'); 
+    }
+
+    async function saveRecipe(e) { 
+      e.preventDefault(); 
+      if (state.isSaving) return; 
+      const f = $('#recipe-form'), error = $('#form-error');
+      
+      const title = f.title.value.trim();
+      const minutes = Number(f.minutes.value);
+      const servings = Number(f.servings.value);
+      const ingredients = [...document.querySelectorAll('.ingredient-input')].map(i => i.value.trim()).filter(Boolean);
+      const steps = [...document.querySelectorAll('.step-input')].map(i => i.value.trim()).filter(Boolean);
+      
+      if (!title || !ingredients.length || !steps.length) {
+        error.textContent = 'Nom, et au moins un ingrédient et une étape requis.'; error.hidden = false; return;
+      }
+      if (!Number.isInteger(minutes) || minutes < 1 || minutes > 9999 || !Number.isInteger(servings) || servings < 1 || servings > 99) {
+        error.textContent = 'Durée et nombre de personnes doivent être des nombres entiers valides (> 0).'; error.hidden = false; return;
+      }
+      error.hidden = true;
+      
+      state.isSaving = true;
+      const btn = $('#save-button'); btn.disabled = true; btn.textContent = 'Enregistrement...';
+
+      try {
+        let existing = state.editingId ? await recipeDb.get(state.editingId) : null;
+        if (state.editingId && !existing) {
+           showToast("Impossible : la recette a été supprimée ailleurs.");
+           showView('list'); return;
+        }
+        
+        const recipe = {
+          id: state.editingId || (Date.now().toString(36) + Math.random().toString(36).substring(2)),
+          title, minutes, servings, difficulty: f.difficulty.value, ingredients, steps,
+          photo: state.photo,
+          favorite: existing?.favorite || false,
+          createdAt: existing?.createdAt || Date.now(),
+          updatedAt: Date.now()
+        };
+        
+        await recipeDb.save(recipe); 
+        await refreshRecipes();
+        if(syncChannel) syncChannel.postMessage('sync');
+        showView('list'); 
+        showToast(state.editingId ? 'Recette modifiée' : 'Recette enregistrée'); 
+      } catch (err) { 
+        console.error(err);
+        error.textContent = err.name === 'QuotaExceededError' ? "L'espace de stockage de votre navigateur est plein. Impossible d'enregistrer." : "Erreur lors de la sauvegarde."; 
+        error.hidden = false;
+      } finally {
+        state.isSaving = false; btn.disabled = false; btn.textContent = 'Enregistrer la recette';
+      }
+    }
+
+    // --- DETAIL ---
+    async function openDetail(id) { 
+      const recipe = state.recipes.find(r => r.id === id); 
+      if (!recipe) return showToast('Recette introuvable.'); 
+      views.detail.dataset.id = id; 
+      
+      views.detail.innerHTML = `
+        <div class="detail-hero">${recipe.photo ? `<img src="${recipe.photo}" alt="" />` : '<span>🍽</span>'}</div>
+        <div class="detail-content">
+          <div class="detail-title">
+            <div><p class="eyebrow">RECETTE</p><h1>${escapeHtml(recipe.title)}</h1><p class="detail-meta">${formatMeta(recipe)}</p></div>
+            <button class="favorite large ${recipe.favorite ? 'active' : ''}" id="detail-favorite" type="button" aria-label="Favori">♥</button>
+          </div>
+          <section><p class="eyebrow">À PRÉVOIR</p><h2>Ingrédients</h2><ul class="ingredients-detail">${recipe.ingredients.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul></section>
+          <section><p class="eyebrow">PAS À PAS</p><h2>Préparation</h2><ol class="steps-detail">${recipe.steps.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ol></section>
+          <div class="detail-actions"><button class="secondary-button" id="edit-recipe" type="button">Modifier</button><button class="danger-button" id="delete-recipe" type="button">Supprimer</button></div>
+        </div>`;
+        
+      $('#detail-favorite').onclick = () => toggleFavorite(id);
+      $('#edit-recipe').onclick = () => openEdit(id);
+      $('#delete-recipe').onclick = async () => {
+        if (!confirm(`Supprimer « ${recipe.title} » ?`)) return;
+        try { await recipeDb.remove(id); await refreshRecipes(); if(syncChannel) syncChannel.postMessage('sync'); showView('list'); showToast('Supprimée'); } 
+        catch { showToast('Erreur suppression.'); }
+      };
+      showView('detail'); 
+    }
+
+    // --- LISTENERS INITIAUX ---
+    $('#add-button').onclick = () => { resetEditor(); showView('editor'); };
+    $('#back-button').onclick = () => showView('list');
+    $('.brand').onclick = e => { e.preventDefault(); showView('list'); };$('#search-input').oninput = e => { state.query = e.target.value; renderList(); };
+    $('#sort-select').onchange = e => { state.sort = e.target.value; localStorage.setItem('mijote_sort', state.sort); renderList(); };
+    $('#add-ingredient').onclick = () => addIngredient().focus();
+    $('#add-step').onclick = () => addStep();
+    $('#photo-input').onchange = handlePhoto;
+    $('#remove-photo').onclick = () => { state.photo = null; $('#photo-input').value = ''; $('#photo-preview').hidden = true; $('#photo-label').hidden = false; $('#remove-photo').hidden = true; };
+    $('#cancel-editor').onclick = () => {
+      if ($('#recipe-form').title.value.trim() && !confirm("Ignorer les modifications ?")) return;
+      showView(views.detail.dataset.id && state.editingId ? 'detail' : 'list');
+    };
+    $('#recipe-form').onsubmit = saveRecipe;
+
+    // Boot (Lancement de l'app)
+    // On appelle refreshRecipes() tout court pour que l'affichage se mette à jour !
+    refreshRecipes().then(() => {
+      const hash = window.location.hash.substring(1);
+      // On empêche d'ouvrir une page de détail vide si l'utilisateur rafraichit depuis celle-ci 
+      // (l'URL ne contenant pas l'ID de la recette).
+      if (hash === 'editor') {
+        resetEditor();
+        showView('editor', false);
+      } else {
+        showView('list', false);
+      }
+    });
+  </script>
+</body>
+</html>
